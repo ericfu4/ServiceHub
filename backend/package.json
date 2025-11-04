@@ -1,6 +1,7 @@
 {
   "name": "servicehub-backend",
   "version": "1.0.0",
+  "type": "module",
   "description": "ServiceHub backend API",
   "main": "server.js",
   "scripts": {
@@ -9,19 +10,23 @@
     "lint": "eslint .",
     "format": "prettier --write ."
   },
-  "keywords": ["servicehub", "marketplace", "api"],
+  "keywords": [
+    "servicehub",
+    "marketplace",
+    "api"
+  ],
   "author": "Eric Fu & Brandan Yong",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
-    "mongodb": "^6.3.0",
-    "express-session": "^1.17.3",
-    "dotenv": "^16.3.1",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "express-session": "^1.18.2",
+    "mongodb": "^6.20.0",
     "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2",
-    "eslint": "^8.56.0",
+    "eslint": "^8.57.1",
+    "nodemon": "^3.1.10",
     "prettier": "^3.1.1"
   }
 }
