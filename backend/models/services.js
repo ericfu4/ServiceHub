@@ -37,23 +37,48 @@ export async function getService(id) {
 }
 
 export async function updateService(id, providerId, patch) {
-  const col = getDB().collection(COLLECTION);
-  const res = await col.findOneAndUpdate(
-    { _id: new ObjectId(id), providerId: new ObjectId(providerId) },
-    { $set: { ...patch, updatedAt: new Date() } },
-    { returnDocument: 'after' }
+  const col = getDB().collection('services');
+  const _id = new ObjectId(id);
+
+  const existing = await col.findOne({ _id });
+  if (!existing || existing.status === 'deleted') return null;
+
+  const ownerOk = new ObjectId(existing.providerId).equals(
+    new ObjectId(providerId)
   );
-  return res.value;
+  if (!ownerOk) return null;
+
+  const res = await col.findOneAndUpdate(
+    { _id },
+    { $set: { ...patch, updatedAt: new Date() } },
+    { returnDocument: 'after' } // some driver versions still return null here
+  );
+
+  // Fallback: fetch the doc if value came back null
+  const updated = res.value ?? (await col.findOne({ _id }));
+  return updated;
 }
 
 export async function deleteService(id, providerId) {
-  const col = getDB().collection(COLLECTION);
+  const col = getDB().collection('services');
+  const _id = new ObjectId(id);
+
+  const existing = await col.findOne({ _id });
+  if (!existing || existing.status === 'deleted') return null;
+
+  const ownerOk = new ObjectId(existing.providerId).equals(
+    new ObjectId(providerId)
+  );
+  if (!ownerOk) return null;
+
   const res = await col.findOneAndUpdate(
-    { _id: new ObjectId(id), providerId: new ObjectId(providerId) },
+    { _id },
     { $set: { status: 'deleted', updatedAt: new Date() } },
     { returnDocument: 'after' }
   );
-  return res.value;
+
+  // Return the (now deleted) doc or a minimal success shape
+  return res.value ?? { _id, status: 'deleted' };
 }
 
 export async function searchServices({
@@ -65,29 +90,31 @@ export async function searchServices({
   limit = 12,
 }) {
   const col = getDB().collection(COLLECTION);
+
   const filter = {
     status: 'active',
     hourlyRate: { $gte: Number(min), $lte: Number(max) },
   };
-  if (category) filter.category = category;
-  const pipeline = [];
+  if (category) filter.category = String(category);
 
-  if (q && q.trim()) {
-    pipeline.push({ $match: filter }, { $match: { $text: { $search: q } } });
-  } else {
-    pipeline.push({ $match: filter });
-  }
+  // Put $text into the first $match if q is present
+  const firstMatch =
+    q && q.trim()
+      ? { $match: { ...filter, $text: { $search: q.trim() } } }
+      : { $match: filter };
 
   const skip = (Number(page) - 1) * Number(limit);
-  pipeline.push(
-    { $sort: { createdAt: -1 } },
+
+  const pipeline = [
+    firstMatch,
+    { $sort: q ? { score: { $meta: 'textScore' } } : { createdAt: -1 } },
     {
       $facet: {
         items: [{ $skip: skip }, { $limit: Number(limit) }],
         total: [{ $count: 'count' }],
       },
-    }
-  );
+    },
+  ];
 
   const [res] = await col.aggregate(pipeline).toArray();
   const total = res?.total?.[0]?.count || 0;
