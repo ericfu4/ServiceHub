@@ -2,6 +2,8 @@ import dotenv from 'dotenv';
 import express from 'express';
 import session from 'express-session';
 import { connectDB } from './utils/db.js';
+import authRoutes from './routes/auth.js';
+import userRoutes from './routes/users.js';
 
 dotenv.config();
 
@@ -27,9 +29,8 @@ app.use(
   })
 );
 
-// Routes (to be added)
-// import authRoutes from './routes/auth.js';
-// app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
