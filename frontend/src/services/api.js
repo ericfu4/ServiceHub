@@ -1,4 +1,3 @@
-// frontend/src/services/api.js
 // API utility using native fetch (NO AXIOS)
 
 const RAW_BASE = process.env.REACT_APP_API_URL || ''; // e.g. http://localhost:5001/api
