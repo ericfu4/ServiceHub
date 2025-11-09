@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { getDB } from '../utils/db.js';
 import { connectDB, closeDB } from '../utils/db.js';
 import { ObjectId } from 'mongodb';
