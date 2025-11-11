@@ -1,42 +1,28 @@
 import express from 'express';
 import { ObjectId } from 'mongodb';
 import { reviewsCollection } from '../models/reviews.js';
-import { bookingsCollection, BookingStatus } from '../models/bookings.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// POST /api/reviews - Create review (requires completed booking)
+// POST /api/reviews - Create review (no booking required)
 router.post('/', requireAuth, async (req, res, next) => {
   try {
-    const { bookingId, serviceId, providerId, rating, comment } = req.body;
+    const { serviceId, providerId, rating, comment } = req.body;
     const customerId = req.session.userId;
 
-    // Verify booking exists and is completed
-    const booking = await bookingsCollection().findOne({
-      _id: new ObjectId(bookingId),
-      customerId: new ObjectId(customerId),
-      status: BookingStatus.COMPLETED,
-    });
-
-    if (!booking) {
-      return res
-        .status(403)
-        .json({ error: 'Can only review completed bookings' });
-    }
-
-    // Check if review already exists
+    // Check if user already reviewed this service
     const existing = await reviewsCollection().findOne({
-      bookingId: new ObjectId(bookingId),
+      serviceId: new ObjectId(serviceId),
+      customerId: new ObjectId(customerId),
     });
     if (existing) {
       return res
         .status(409)
-        .json({ error: 'Review already exists for this booking' });
+        .json({ error: 'You have already reviewed this service' });
     }
 
     const review = {
-      bookingId: new ObjectId(bookingId),
       serviceId: new ObjectId(serviceId),
       customerId: new ObjectId(customerId),
       providerId: new ObjectId(providerId),

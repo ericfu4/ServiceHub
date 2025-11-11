@@ -1,6 +1,6 @@
 // src/components/Header.jsx
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/authContext'; // <-- not "authContext"
+import { useAuth } from '../context/authContext';
 import './Header.css';
 
 export default function Header() {
@@ -16,7 +16,12 @@ export default function Header() {
     <header className="header">
       <div className="header__inner">
         <Link to="/" className="brand">
-          ServiceHub
+          <img
+            src="/favicon.png"
+            alt="ServiceHub logo"
+            className="brand__logo"
+          />
+          <span>ServiceHub</span>
         </Link>
 
         <nav className="nav">

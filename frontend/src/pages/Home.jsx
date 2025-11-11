@@ -8,6 +8,7 @@ export default function Home() {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [category, setCategory] = useState('');
+  const [school, setSchool] = useState('');
   const [min, setMin] = useState('');
   const [max, setMax] = useState('');
   const [refreshId, setRefreshId] = useState(0); // 👈 add this
@@ -49,10 +50,38 @@ export default function Home() {
               aria-label="Category"
             >
               <option value="">All categories</option>
-              <option value="tech">Tech</option>
               <option value="tutoring">Tutoring</option>
-              <option value="moving">Moving</option>
-              <option value="photo">Photography</option>
+              <option value="moving">Moving & Delivery</option>
+              <option value="tech">Tech Support</option>
+              <option value="photo">Photography & Video</option>
+              <option value="events">Event Services</option>
+              <option value="design">Graphic Design</option>
+              <option value="writing">Writing & Editing</option>
+              <option value="music">Music Lessons</option>
+              <option value="fitness">Fitness & Training</option>
+              <option value="petcare">Pet Care</option>
+              <option value="home">Home Services</option>
+              <option value="auto">Car Services</option>
+              <option value="food">Food & Catering</option>
+              <option value="admin">Administrative</option>
+              <option value="other">Other</option>
+            </select>
+
+            <select
+              className="select"
+              value={school}
+              onChange={(e) => setSchool(e.target.value)}
+              aria-label="School"
+            >
+              <option value="">All schools</option>
+              <option value="Northeastern University">Northeastern</option>
+              <option value="Boston University">Boston University</option>
+              <option value="MIT">MIT</option>
+              <option value="Harvard">Harvard</option>
+              <option value="Boston College">Boston College</option>
+              <option value="Tufts">Tufts</option>
+              <option value="UMass Boston">UMass Boston</option>
+              <option value="Berklee">Berklee</option>
             </select>
             <input
               className="input"
@@ -92,6 +121,7 @@ export default function Home() {
             <ServiceList
               query={debouncedQuery}
               category={category}
+              school={school}
               min={min}
               max={max}
               refreshId={refreshId}

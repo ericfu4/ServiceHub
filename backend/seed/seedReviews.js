@@ -1,124 +1,80 @@
 // seed/seedReviews.js
-import 'dotenv/config';
-import fs from 'fs';
+import { faker } from '@faker-js/faker';
+import { ObjectId } from 'mongodb';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { ObjectId } from 'mongodb';
 import { connectDB, closeDB, getDB } from '../utils/db.js';
+import { readSeedFile } from './utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-function safeReadJSON(p) {
-  try {
-    return JSON.parse(fs.readFileSync(p, 'utf-8'));
-  } catch {
-    return null;
-  }
-}
+function synthReviews(n = 150, services = [], users = []) {
+  const reviews = [];
+  for (let i = 0; i < n && i < services.length; i++) {
+    const service = faker.helpers.arrayElement(services);
+    const customer = faker.helpers.arrayElement(users);
 
-function synthReviews(n = 150, completedBookings = []) {
-  const comments = [
-    'Great service!',
-    'Very professional.',
-    'Would book again.',
-    'Decent experience.',
-    'Exceeded expectations.',
-  ];
-  const out = [];
-  for (let i = 0; i < n && i < completedBookings.length; i++) {
-    const b = completedBookings[i];
-    out.push({
-      bookingId: b._id,
-      serviceId: b.serviceId,
-      customerId: b.customerId,
-      providerId: b.providerId,
-      rating: (i % 5) + 1,
-      comment: comments[i % comments.length],
-      providerResponse: null,
-      createdAt: new Date(),
+    reviews.push({
+      serviceId: service._id,
+      customerId: customer._id,
+      providerId: service.providerId,
+      rating: faker.number.int({ min: 3, max: 5 }),
+      comment: faker.lorem.sentences(2),
+      providerResponse: Math.random() > 0.7 ? faker.lorem.sentence() : null,
+      createdAt: faker.date.past({ years: 1 }),
     });
   }
-  return out;
+  return reviews;
 }
 
 export async function seedReviews({ limit = 0 } = {}) {
-  await connectDB();
-  const db = getDB();
-  const bookings = db.collection('bookings');
-  const reviews = db.collection('reviews');
-
   try {
-    // Only from completed bookings to match business rules
-    const completed = await bookings
-      .find({ status: 'completed' })
-      .project({ _id: 1, serviceId: 1, customerId: 1, providerId: 1 })
-      .toArray();
+    await connectDB(); // Connect first!
+    const db = getDB();
+    const reviews = db.collection('reviews');
 
-    if (!completed.length) {
-      console.log(
-        '⚠️  No completed bookings found. Creating minimal synthetic ones.'
-      );
-      // In case there are none, pick any bookings (or you could skip entirely)
-      const any = await bookings.find({}).limit(50).toArray();
-      for (const b of any.slice(0, 20)) b.status = 'completed';
-      if (any.length) {
-        await Promise.all(
-          any
-            .slice(0, 20)
-            .map((b) =>
-              bookings.updateOne(
-                { _id: new ObjectId(b._id) },
-                { $set: { status: 'completed' } }
-              )
-            )
-        );
-      }
-      // Refresh completed list
-      const refreshed = await bookings
-        .find({ status: 'completed' })
-        .project({ _id: 1, serviceId: 1, customerId: 1, providerId: 1 })
-        .toArray();
-      completed.splice(0, completed.length, ...refreshed);
+    const services = await db.collection('services').find({}).toArray();
+    const users = await db.collection('users').find({}).toArray();
+
+    if (!services.length || !users.length) {
+      throw new Error('Need services + users before seeding reviews.');
     }
 
     const dataPath = path.join(__dirname, 'data', 'reviews.json');
-    let rows = safeReadJSON(dataPath);
-    if (rows) {
-      // Map incoming rows to completed booking IDs when possible
-      rows = rows
-        .slice(0, limit && Number(limit) > 0 ? Number(limit) : rows.length)
-        .map((r, i) => {
-          const b = completed[i % completed.length];
-          return {
-            bookingId: new ObjectId(r.bookingId || b._id),
-            serviceId: new ObjectId(r.serviceId || b.serviceId),
-            customerId: new ObjectId(r.customerId || b.customerId),
-            providerId: new ObjectId(r.providerId || b.providerId),
-            rating: Math.max(1, Math.min(5, Number(r.rating || (i % 5) + 1))),
-            comment: String(r.comment || 'Great service!'),
-            providerResponse: r.providerResponse ?? null,
-            createdAt: new Date(r.createdAt || Date.now()),
-          };
-        });
-    } else {
-      // Synthetic
-      const synth = synthReviews(
-        limit && Number(limit) > 0 ? Number(limit) : 150,
-        completed
-      );
-      rows = synth;
-    }
+    let rows = await readSeedFile(dataPath);
+
+    if (!rows) rows = synthReviews(150, services, users);
+
+    const docs = (limit ? rows.slice(0, limit) : rows).map((r) => ({
+      serviceId: new ObjectId(
+        r.serviceId || faker.helpers.arrayElement(services)._id
+      ),
+      customerId: new ObjectId(
+        r.customerId || faker.helpers.arrayElement(users)._id
+      ),
+      providerId: new ObjectId(
+        r.providerId || faker.helpers.arrayElement(services).providerId
+      ),
+      rating: Number(r.rating ?? faker.number.int({ min: 1, max: 5 })),
+      comment: r.comment || faker.lorem.sentences(2),
+      providerResponse:
+        r.providerResponse ||
+        (Math.random() > 0.7 ? faker.lorem.sentence() : null),
+      createdAt: r.createdAt
+        ? new Date(r.createdAt)
+        : faker.date.past({ years: 1 }),
+    }));
 
     await reviews.deleteMany({});
-    const result = await reviews.insertMany(rows, { ordered: false });
-    const inserted = Object.keys(result.insertedIds || {}).length;
+    const result = await reviews.insertMany(docs, { ordered: false });
+    const inserted = result.insertedCount;
     console.log(`✅ Inserted ${inserted} reviews`);
-    return { inserted };
+    return inserted;
   } catch (err) {
     console.error('❌ Error seeding reviews:', err.message);
-    throw err;
+    return 0;
   } finally {
-    await closeDB();
+    await closeDB(); // Close connection
   }
 }

@@ -7,6 +7,7 @@ import ServiceCard from '../components/ServiceCard';
 export default function ServiceList({
   query,
   category,
+  school,
   min,
   max,
   refreshId = 0,
@@ -19,12 +20,13 @@ export default function ServiceList({
     const p = new URLSearchParams();
     if (query) p.set('q', query);
     if (category) p.set('category', category);
+    if (school) p.set('location', school);
     if (min) p.set('min', min);
     if (max) p.set('max', max);
     p.set('page', '1');
-    p.set('limit', '12');
+    p.set('limit', '20');
     return p.toString();
-  }, [query, category, min, max]);
+  }, [query, category, school, min, max]);
 
   useEffect(() => {
     let cancelled = false;
@@ -32,7 +34,7 @@ export default function ServiceList({
       setErr('');
       setLoading(true);
       try {
-        const data = await api.get(`/api/services?${qs}`); // NOTE: /api/services
+        const data = await api.get(`/api/services?${qs}`);
         if (!cancelled) setItems(data.items || []);
       } catch (e) {
         if (!cancelled) setErr(e.message || 'Failed to load services');
@@ -43,7 +45,7 @@ export default function ServiceList({
     return () => {
       cancelled = true;
     };
-  }, [qs, refreshId]); // 👈 refetch when refreshId changes
+  }, [qs, refreshId]);
 
   if (loading) {
     return (
@@ -71,6 +73,7 @@ export default function ServiceList({
 ServiceList.propTypes = {
   query: PropTypes.string,
   category: PropTypes.string,
+  school: PropTypes.string,
   min: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   max: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   refreshId: PropTypes.number,

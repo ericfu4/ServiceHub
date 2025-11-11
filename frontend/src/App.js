@@ -1,3 +1,4 @@
+// src/App.js
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Home from './pages/Home';
@@ -5,8 +6,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import ServiceDetail from './pages/ServiceDetail';
+import './App.css';
 
-function App() {
+export default function App() {
   return (
     <>
       <Header />
@@ -23,5 +25,3 @@ function App() {
     </>
   );
 }
-
-export default App;

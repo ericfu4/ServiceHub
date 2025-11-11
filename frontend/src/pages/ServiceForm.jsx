@@ -8,7 +8,7 @@ export default function ServiceForm({ onCreated }) {
   const [form, setForm] = useState({
     title: '',
     description: '',
-    category: 'tech',
+    category: 'tutoring',
     hourlyRate: 20,
     location: '',
     // isEmergency removed
@@ -35,7 +35,7 @@ export default function ServiceForm({ onCreated }) {
       setForm({
         title: '',
         description: '',
-        category: 'tech',
+        category: 'tutoring',
         hourlyRate: 20,
         location: '',
       });
@@ -93,10 +93,21 @@ export default function ServiceForm({ onCreated }) {
             value={form.category}
             onChange={(e) => update('category', e.target.value)}
           >
-            <option value="tech">Tech</option>
             <option value="tutoring">Tutoring</option>
-            <option value="moving">Moving</option>
-            <option value="photo">Photography</option>
+            <option value="moving">Moving & Delivery</option>
+            <option value="tech">Tech Support</option>
+            <option value="photo">Photography & Video</option>
+            <option value="events">Event Services</option>
+            <option value="design">Graphic Design</option>
+            <option value="writing">Writing & Editing</option>
+            <option value="music">Music Lessons</option>
+            <option value="fitness">Fitness & Training</option>
+            <option value="petcare">Pet Care</option>
+            <option value="home">Home Services</option>
+            <option value="auto">Car Services</option>
+            <option value="food">Food & Catering</option>
+            <option value="admin">Administrative</option>
+            <option value="other">Other</option>
           </select>
         </div>
 
@@ -115,14 +126,23 @@ export default function ServiceForm({ onCreated }) {
       </div>
 
       <div>
-        <label htmlFor="loc">Location</label>
-        <input
+        <label htmlFor="loc">School</label>
+        <select
           id="loc"
-          className="input"
-          placeholder="e.g., Northeastern"
+          className="select"
           value={form.location}
           onChange={(e) => update('location', e.target.value)}
-        />
+        >
+          <option value="">Select school</option>
+          <option value="Northeastern University">Northeastern</option>
+          <option value="Boston University">Boston University</option>
+          <option value="MIT">MIT</option>
+          <option value="Harvard">Harvard</option>
+          <option value="Boston College">Boston College</option>
+          <option value="Tufts">Tufts</option>
+          <option value="UMass Boston">UMass Boston</option>
+          <option value="Berklee">Berklee</option>
+        </select>
       </div>
 
       <div className="serviceForm__footer">

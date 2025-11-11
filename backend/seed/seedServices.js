@@ -18,13 +18,32 @@ function safeReadJSON(p) {
 }
 
 function synthServices(n = 60, userIds = []) {
-  const cats = ['tech', 'tutoring', 'moving', 'photo'];
-  const locs = [
-    'Northeastern',
-    'Campus Center',
-    'Library',
-    'Dorms',
-    'Off-campus',
+  const cats = [
+    'tutoring',
+    'moving',
+    'tech',
+    'photo',
+    'events',
+    'design',
+    'writing',
+    'music',
+    'fitness',
+    'petcare',
+    'home',
+    'auto',
+    'food',
+    'admin',
+    'other',
+  ];
+  const schools = [
+    'Northeastern University',
+    'Boston University',
+    'MIT',
+    'Harvard',
+    'Boston College',
+    'Tufts',
+    'UMass Boston',
+    'Berklee',
   ];
   const out = [];
   for (let i = 0; i < n; i++) {
@@ -40,7 +59,7 @@ function synthServices(n = 60, userIds = []) {
       availability: [],
       status: 'active',
       isEmergency: false,
-      location: locs[i % locs.length],
+      location: schools[i % schools.length],
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -71,14 +90,14 @@ export async function seedServices({ limit = 0 } = {}) {
       return {
         title: String(s.title || `Service ${i + 1}`).trim(),
         description: String(s.description || '').trim(),
-        category: String(s.category || 'tech'),
+        category: String(s.category || 'tutoring'),
         hourlyRate: Number(s.hourlyRate || 20),
         providerId,
         images: Array.isArray(s.images) ? s.images : [],
         availability: Array.isArray(s.availability) ? s.availability : [],
         status: s.status === 'deleted' ? 'deleted' : 'active',
         isEmergency: Boolean(s.isEmergency),
-        location: String(s.location || 'Northeastern'),
+        location: String(s.location || 'Northeastern University'),
         createdAt: new Date(s.createdAt || Date.now()),
         updatedAt: new Date(s.updatedAt || Date.now()),
       };

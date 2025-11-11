@@ -1,83 +1,75 @@
 // API utility using native fetch (NO AXIOS)
 
-const RAW_BASE = process.env.REACT_APP_API_URL || ''; // e.g. http://localhost:5001/api
-const API_BASE_URL = RAW_BASE.replace(/\/+$/, '');    // trim trailing slash
+const API_BASE_URL = process.env.REACT_APP_API_URL || '';
 
-function buildURL(endpoint = '') {
-  const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  return `${API_BASE_URL}${path}`;
-}
-
-export function qs(params = {}) {
-  const u = new URLSearchParams();
-  Object.entries(params).forEach(([k, v]) => {
-    if (v !== undefined && v !== null && v !== '') u.append(k, String(v));
-  });
-  const s = u.toString();
-  return s ? `?${s}` : '';
-}
-
-async function handleResponse(response) {
-  let data = null;
-  try {
-    data = await response.json();
-  } catch {
-    // non-JSON response; leave data as null
+const handleResponse = async (response) => {
+  // 204/304 have no body -> don't try to parse JSON
+  if (response.status === 204 || response.status === 304) {
+    if (!response.ok) {
+      throw new Error('Request failed'); // just in case
+    }
+    return {}; // or return null; callers should handle this
   }
+
+  // Safely parse JSON (some endpoints may return empty string)
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+
   if (!response.ok) {
-    const err = new Error((data && (data.error || data.message)) || `Request failed (${response.status})`);
-    err.status = response.status;
-    err.data = data;
-    throw err;
+    throw new Error(data?.error || 'Request failed');
   }
-  return data ?? {};
-}
+  return data;
+};
 
 export const api = {
-  get: async (endpoint, params) => {
-    const url = buildURL(endpoint) + (params ? qs(params) : '');
-    const res = await fetch(url, {
+  get: async (endpoint) => {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'GET',
-      credentials: 'include', // send session cookie
+      credentials: 'include',
+      cache: 'no-store', // <- avoid 304s entirely during dev
+      headers: { 'Cache-Control': 'no-cache' },
     });
-    return handleResponse(res);
+    return handleResponse(response);
   },
 
   post: async (endpoint, body) => {
-    const res = await fetch(buildURL(endpoint), {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: body ? JSON.stringify(body) : undefined,
+      body: JSON.stringify(body),
+      cache: 'no-store',
     });
-    return handleResponse(res);
+    return handleResponse(response);
   },
 
   put: async (endpoint, body) => {
-    const res = await fetch(buildURL(endpoint), {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: body ? JSON.stringify(body) : undefined,
+      body: JSON.stringify(body),
+      cache: 'no-store',
     });
-    return handleResponse(res);
+    return handleResponse(response);
   },
 
   delete: async (endpoint) => {
-    const res = await fetch(buildURL(endpoint), {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'DELETE',
       credentials: 'include',
+      cache: 'no-store',
     });
-    return handleResponse(res);
+    return handleResponse(response);
   },
 
   uploadFile: async (endpoint, formData) => {
-    const res = await fetch(buildURL(endpoint), {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       credentials: 'include',
-      // Don't set Content-Type when sending FormData
       body: formData,
+      cache: 'no-store',
     });
-    return handleResponse(res);
+    return handleResponse(response);
   },
 };

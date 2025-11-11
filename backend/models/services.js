@@ -102,6 +102,10 @@ export async function deleteService(id, providerId) {
 /**
  * List only the current user's listings (for /api/services/mine).
  */
+/**
+ * List only the current user's listings (for /api/services/mine).
+ * NOW INCLUDES: averageRating and reviewsCount from reviews collection
+ */
 export async function listServicesByProvider(
   providerId,
   { page = 1, limit = 12 } = {}
@@ -115,33 +119,74 @@ export async function listServicesByProvider(
 
   const col = getDB().collection(COLLECTION);
   const filter = { providerId: pid, status: 'active' };
-
   const skip = (Number(page) - 1) * Number(limit);
-  const [items, total] = await Promise.all([
-    col
-      .find(filter)
-      .sort({ updatedAt: -1, createdAt: -1 })
-      .skip(skip)
-      .limit(Number(limit))
-      .toArray(),
-    col.countDocuments(filter),
-  ]);
 
-  return { items, total, page: Number(page), limit: Number(limit) };
+  const pipeline = [
+    { $match: filter },
+
+    // Join with reviews to get rating data
+    {
+      $lookup: {
+        from: 'reviews',
+        localField: '_id',
+        foreignField: 'serviceId',
+        as: 'reviews',
+      },
+    },
+
+    // Calculate average rating and count
+    {
+      $addFields: {
+        reviewsCount: { $size: '$reviews' },
+        averageRating: {
+          $cond: {
+            if: { $gt: [{ $size: '$reviews' }, 0] },
+            then: { $avg: '$reviews.rating' },
+            else: 0,
+          },
+        },
+      },
+    },
+
+    // Remove the reviews array
+    {
+      $project: { reviews: 0 },
+    },
+
+    { $sort: { updatedAt: -1, createdAt: -1 } },
+    {
+      $facet: {
+        items: [{ $skip: skip }, { $limit: Number(limit) }],
+        total: [{ $count: 'count' }],
+      },
+    },
+  ];
+
+  const [res] = await col.aggregate(pipeline).toArray();
+  const total = res?.total?.[0]?.count || 0;
+
+  return {
+    items: res?.items || [],
+    total,
+    page: Number(page),
+    limit: Number(limit),
+  };
 }
 
 /**
  * Search/browse services (homepage + profile fallback).
  * Accepts optional providerId (non-throwing if invalid).
+ * NOW INCLUDES: averageRating and reviewsCount from reviews collection
  */
 export async function searchServices({
   q = '',
   category,
+  location,
   min = 0,
   max = 1e9,
   page = 1,
   limit = 12,
-  providerId, // NEW (optional)
+  providerId,
 } = {}) {
   const col = getDB().collection(COLLECTION);
 
@@ -151,17 +196,16 @@ export async function searchServices({
   };
 
   if (category) filter.category = String(category);
+  if (location) filter.location = String(location);
 
-  // if providerId is supplied, add it when it's valid; ignore if invalid
   if (providerId) {
     try {
       filter.providerId = new ObjectId(providerId);
     } catch {
-      // ignore invalid providerId to avoid the “24 hex” crash
+      // ignore invalid providerId
     }
   }
 
-  // Put $text into the first $match if q is present
   const firstMatch =
     q && q.trim()
       ? { $match: { ...filter, $text: { $search: q.trim() } } }
@@ -171,6 +215,36 @@ export async function searchServices({
 
   const pipeline = [
     firstMatch,
+
+    // Join with reviews to get rating data
+    {
+      $lookup: {
+        from: 'reviews',
+        localField: '_id',
+        foreignField: 'serviceId',
+        as: 'reviews',
+      },
+    },
+
+    // Calculate average rating and count
+    {
+      $addFields: {
+        reviewsCount: { $size: '$reviews' },
+        averageRating: {
+          $cond: {
+            if: { $gt: [{ $size: '$reviews' }, 0] },
+            then: { $avg: '$reviews.rating' },
+            else: 0,
+          },
+        },
+      },
+    },
+
+    // Remove the reviews array (we only need the aggregated data)
+    {
+      $project: { reviews: 0 },
+    },
+
     { $sort: q ? { score: { $meta: 'textScore' } } : { createdAt: -1 } },
     {
       $facet: {

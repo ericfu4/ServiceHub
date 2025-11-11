@@ -8,7 +8,7 @@ if (!uri) {
   process.exit(1);
 }
 
-const names = ['users', 'services', 'bookings', 'reviews'];
+const names = ['users', 'services', 'reviews'];
 
 (async () => {
   const client = new MongoClient(uri);

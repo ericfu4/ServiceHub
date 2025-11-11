@@ -1,109 +1,128 @@
 // src/pages/ServiceDetail.jsx
-import { useEffect, useState, useMemo } from 'react';
-import PropTypes from 'prop-types';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../services/api';
-import Loading from '../components/Loading';
-import ReviewsList from './ReviewsList';
 import './ServiceDetail.css';
 
-export default function ServiceDetail({
-  id: idProp,
-  canEdit = false,
-  onDeleted,
-}) {
-  const { id: idFromRoute } = useParams();
+export default function ServiceDetail() {
+  const { id } = useParams();
   const navigate = useNavigate();
 
-  // prefer route param, fall back to prop
-  const id = useMemo(() => idFromRoute || idProp, [idFromRoute, idProp]);
-
   const [svc, setSvc] = useState(null);
+  const [provider, setProvider] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [avg, setAvg] = useState(0);
+
+  const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [me, setMe] = useState(null);
+
+  // review form
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const canSubmit = useMemo(
+    () => rating >= 1 && rating <= 5 && comment.trim().length > 0,
+    [rating, comment]
+  );
 
   useEffect(() => {
-    if (!id) {
-      setErr('Missing service id');
-      return;
-    }
     let alive = true;
-    setErr('');
-    api
-      .get(`/api/services/${id}`)
-      .then((res) => {
-        if (alive) setSvc(res.service);
-      })
-      .catch((e) => setErr(e.message || 'Failed to load service'));
+    (async () => {
+      try {
+        setErr('');
+        setLoading(true);
+
+        // who am I? (silent if not logged in)
+        try {
+          const { userId } = await api.get('/api/auth/me');
+          if (alive && userId) {
+            const u = await api.get(`/api/users/${userId}`);
+            if (alive) setMe(u.user ?? u);
+          }
+        } catch {
+          // ignore; me stays null
+        }
+
+        // service (already includes providerEmail and providerName)
+        const svcRes = await api.get(`/api/services/${id}`);
+        if (!alive) return;
+        const service = svcRes?.service ?? svcRes ?? null;
+        if (!service) throw new Error('Service not found');
+        setSvc(service);
+
+        // Use provider info from service response (no separate API call needed)
+        if (service.providerEmail) {
+          setProvider({
+            email: service.providerEmail,
+            username: service.providerName,
+          });
+        }
+
+        // reviews + average
+        const r = await api.get(`/api/reviews/service/${id}`);
+        if (!alive) return;
+        setReviews(r.reviews ?? []);
+        setAvg(r.averageRating ?? 0);
+      } catch (e) {
+        if (alive) setErr(e?.message || 'Failed to load service');
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
     return () => {
       alive = false;
     };
   }, [id]);
 
-  async function update(field, value) {
-    if (!canEdit || !id) return;
-    setSaving(true);
-    setErr('');
+  async function submitReview(e) {
+    e.preventDefault();
+    if (!canSubmit || !svc) return;
+
     try {
-      const { service } = await api.put(`/api/services/${id}`, {
-        [field]: value,
+      await api.post('/api/reviews', {
+        serviceId: id,
+        providerId: svc.providerId,
+        rating: Number(rating),
+        comment: comment.trim(),
       });
-      setSvc(service);
+
+      const r = await api.get(`/api/reviews/service/${id}`);
+      setReviews(r.reviews ?? []);
+      setAvg(r.averageRating ?? 0);
+      setRating(5);
+      setComment('');
     } catch (e) {
-      setErr(e.message || 'Failed to update');
-    } finally {
-      setSaving(false);
+      const msg = e?.message || 'Could not submit review';
+      if (/401|403/.test(msg)) {
+        setErr('You must be signed in and have a completed booking to review.');
+      } else {
+        setErr(msg);
+      }
     }
   }
 
-  async function remove() {
-    if (!canEdit || !id) return;
-    if (!window.confirm('Delete this service?')) return;
-    try {
-      await api.delete(`/api/services/${id}`);
-      onDeleted?.();
-      // Go to My Listings if present, otherwise home
-      navigate('/me', { replace: true });
-    } catch (e) {
-      setErr(e.message || 'Failed to delete');
-    }
-  }
-
-  if (!id) {
-    return (
-      <p className="error" role="alert">
-        Invalid service URL.
-      </p>
-    );
-  }
-
-  if (!svc && !err) return <Loading label="Loading service…" />;
-
-  if (err) {
-    return (
-      <p className="error" role="alert">
-        {err}
-      </p>
-    );
-  }
-
+  if (loading) return <div className="svcDetail--loading">Loading…</div>;
+  if (err) return <div className="alert">{err}</div>;
   if (!svc) return null;
 
   return (
-    <section className="svcDetail">
-      <h2>{svc.title}</h2>
-
-      <p
-        className="svcDetail__rating"
-        aria-label={`Rating ${svc.averageRating ?? 0} of 5`}
-      >
-        {Array.from({ length: 5 }).map((_, i) => (
-          <span key={i} aria-hidden="true">
-            {i < Math.round(svc.averageRating ?? 0) ? '★' : '☆'}
+    <div className="svcDetail">
+      <header className="svcDetail__header">
+        <h1 className="svcDetail__title">{svc.title}</h1>
+        <div
+          className="svcDetail__rating"
+          aria-label={`Average rating ${avg} of 5`}
+        >
+          {Array.from({ length: 5 }).map((_, i) => (
+            <span key={i} aria-hidden="true">
+              {i < Math.round(avg) ? '★' : '☆'}
+            </span>
+          ))}
+          <span className="svcDetail__ratingCount">
+            ({reviews?.length ?? 0})
           </span>
-        ))}
-        <span className="count">({svc.reviewsCount ?? 0})</span>
-      </p>
+        </div>
+      </header>
 
       <p className="svcDetail__desc">{svc.description}</p>
 
@@ -122,33 +141,81 @@ export default function ServiceDetail({
         </div>
       </dl>
 
-      {canEdit && (
-        <div className="svcDetail__actions">
-          <button
-            onClick={() => {
-              const v = Number(prompt('New rate?', svc.hourlyRate));
-              if (!Number.isNaN(v)) update('hourlyRate', v);
-            }}
-            disabled={saving}
-          >
-            Update Rate
-          </button>
-          <button className="danger" onClick={remove} disabled={saving}>
-            Delete
-          </button>
-        </div>
-      )}
+      <aside className="svcDetail__contact">
+        <h3>Contact me</h3>
+        <p className="svcDetail__contactEmail">
+          {provider?.email ? (
+            <a href={`mailto:${provider.email}`}>{provider.email}</a>
+          ) : (
+            'Email unavailable'
+          )}
+        </p>
+      </aside>
 
       <section className="svcDetail__reviews">
         <h3>Reviews</h3>
-        <ReviewsList serviceId={id} />
+
+        {reviews.length === 0 ? (
+          <p className="muted">No reviews yet.</p>
+        ) : (
+          <ul className="reviewList">
+            {reviews.map((r, idx) => (
+              <li key={r._id || idx} className="reviewItem">
+                <div className="reviewItem__stars">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <span key={i} aria-hidden="true">
+                      {i < r.rating ? '★' : '☆'}
+                    </span>
+                  ))}
+                </div>
+                <p>{r.comment}</p>
+                <span className="reviewItem__date">
+                  {r.createdAt
+                    ? new Date(r.createdAt).toLocaleDateString()
+                    : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Show form only if logged in */}
+        {me ? (
+          <form className="reviewForm" onSubmit={submitReview}>
+            <label className="reviewForm__label">Your rating</label>
+            <select
+              className="select"
+              value={rating}
+              onChange={(e) => setRating(Number(e.target.value))}
+            >
+              {[5, 4, 3, 2, 1].map((n) => (
+                <option key={n} value={n}>
+                  {n} ★
+                </option>
+              ))}
+            </select>
+
+            <label className="reviewForm__label" htmlFor="comment">
+              Your review
+            </label>
+            <textarea
+              id="comment"
+              className="textarea"
+              placeholder="Share your experience…"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+            />
+
+            <button className="button button--primary" disabled={!canSubmit}>
+              Post review
+            </button>
+          </form>
+        ) : (
+          <div className="muted" style={{ marginTop: 12 }}>
+            <a href="/login">Sign in</a> to leave a review.
+          </div>
+        )}
       </section>
-    </section>
+    </div>
   );
 }
-
-ServiceDetail.propTypes = {
-  id: PropTypes.string, // now optional (route param preferred)
-  canEdit: PropTypes.bool,
-  onDeleted: PropTypes.func,
-};

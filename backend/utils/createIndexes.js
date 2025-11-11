@@ -37,14 +37,6 @@ export async function createIndexes() {
   await safeCreateIndex(db.collection('services'), { hourlyRate: 1 });
   await safeCreateIndex(db.collection('services'), { createdAt: -1 });
 
-  // --- bookings ---
-  await safeCreateIndex(db.collection('bookings'), { customerId: 1 });
-  await safeCreateIndex(db.collection('bookings'), { providerId: 1 });
-  await safeCreateIndex(db.collection('bookings'), { serviceId: 1 });
-  await safeCreateIndex(db.collection('bookings'), { status: 1 });
-  await safeCreateIndex(db.collection('bookings'), { date: 1 });
-  await safeCreateIndex(db.collection('bookings'), { createdAt: -1 });
-
   // --- reviews ---
   await safeCreateIndex(db.collection('reviews'), { serviceId: 1 });
   await safeCreateIndex(db.collection('reviews'), { providerId: 1 });
