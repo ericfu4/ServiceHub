@@ -1,24 +1,17 @@
-const { ObjectId } = require('mongodb');
-const { getDB } = require('../utils/db');
+// backend/models/reviews.js (ESM)
+import { getDB } from '../utils/db.js';
 
-const COLLECTION_NAME = 'reviews';
+export const REVIEWS_COLLECTION = 'reviews';
 
-const reviewsCollection = () => getDB().collection(COLLECTION_NAME);
+export function reviewsCollection() {
+  return getDB().collection(REVIEWS_COLLECTION);
+}
 
-// Schema structure (for reference, MongoDB is schemaless)
-// {
-//   _id: ObjectId,
-//   bookingId: ObjectId,
-//   serviceId: ObjectId,
-//   customerId: ObjectId,
-//   providerId: ObjectId,
-//   rating: Number (1-5),
-//   comment: String,
-//   providerResponse: String (optional),
-//   createdAt: Date
-// }
-
-module.exports = {
-  reviewsCollection,
-  COLLECTION_NAME,
-};
+// (Optional) helper to create useful indexes once
+export async function ensureReviewIndexes() {
+  const col = reviewsCollection();
+  await col.createIndex({ serviceId: 1 });
+  await col.createIndex({ providerId: 1 });
+  await col.createIndex({ customerId: 1 });
+  await col.createIndex({ createdAt: -1 });
+}
