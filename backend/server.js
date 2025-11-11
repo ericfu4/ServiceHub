@@ -1,14 +1,18 @@
+// backend/server.js
 import dotenv from 'dotenv';
 import express from 'express';
 import session from 'express-session';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 import { connectDB } from './utils/db.js';
 import { createIndexes } from './utils/createIndexes.js';
+
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import serviceRoutes from './routes/services.js';
 import bookingRoutes from './routes/bookings.js';
 import reviewRoutes from './routes/reviews.js';
-import cors from 'cors';
 
 dotenv.config();
 
@@ -17,78 +21,62 @@ const PORT = process.env.PORT || 5001;
 
 app.set('trust proxy', 1);
 
-// CORS must allow the exact frontend origin and credentials
-app.use(
-  cors({
-    origin: 'http://localhost:3000', // your React dev server
-    credentials: true, // allow cookies
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'X-Requested-With'],
-  })
-);
-
-// Handle preflight quickly (helps some proxies/tools)
-app.options(
-  '*',
-  cors({
-    origin: 'http://localhost:3000',
-    credentials: true,
-  })
-);
-
-// Middleware
+// ---------- middleware (no CORS) ----------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session configuration
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'my-super-secret-session-key-2025',
     resave: false,
     saveUninitialized: false,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // 24 hours
+      maxAge: 1000 * 60 * 60 * 24, // 24h
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
     },
   })
 );
 
+// ---------- API routes ----------
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
 
-// Health check
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', message: 'ServiceHub API is running' });
 });
 
-// Error handling middleware
-app.use((err, _req, res, _next) => {
-  console.error(err.stack);
-  res
-    .status(err.status || 500)
-    .json({ error: err.message || 'Internal server error' });
+// Optional: 404 for unknown API paths (do this BEFORE SPA catch-all)
+app.use('/api', (_req, res) =>
+  res.status(404).json({ error: 'Route not found' })
+);
+
+// ---------- Serve React in production (same origin) ----------
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const clientBuild = path.join(__dirname, '../frontend/build');
+
+app.use(express.static(clientBuild));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(clientBuild, 'index.html'));
 });
 
-// 404 handler
-app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));
-
-// Start server
-const startServer = async () => {
+// ---------- bootstrap ----------
+async function startServer() {
   try {
     await connectDB();
     await createIndexes();
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });
-  } catch (error) {
-    console.error('Failed to start server:', error);
+  } catch (err) {
+    console.error('Failed to start server:', err);
     process.exit(1);
   }
-};
+}
 
 startServer();
