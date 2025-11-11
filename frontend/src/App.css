@@ -189,3 +189,25 @@
     transform: translateX(100%);
   }
 }
+
+/* Link reset + theme */
+a {
+  color: var(--text);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+a:visited {
+  color: var(--text);
+}
+
+/* Only use .link class when you *want* a styled anchor */
+.link {
+  color: var(--brand);
+  text-decoration: none;
+}
+.link:hover {
+  text-decoration: underline;
+}

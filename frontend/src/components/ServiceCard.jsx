@@ -1,15 +1,11 @@
 // src/components/ServiceCard.jsx
 import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 import './ServiceCard.css';
 
-export default function ServiceCard({ service, onClick, hideActions = false }) {
+export default function ServiceCard({ service }) {
   return (
-    <article
-      className="svcCard"
-      tabIndex={0}
-      onClick={() => onClick?.(service)}
-      onKeyDown={(e) => e.key === 'Enter' && onClick?.(service)}
-    >
+    <Link to={`/services/${service._id}`} className="svcCard">
       <header className="svcCard__header">
         <div
           className="svcCard__rating"
@@ -32,41 +28,12 @@ export default function ServiceCard({ service, onClick, hideActions = false }) {
       <p className="svcCard__desc">{service.description}</p>
 
       <div className="svcCard__meta">
-        <span className="chip">{service.category || '—'}</span>
         <span className="svcCard__rate">${service.hourlyRate}/hr</span>
-        <span className="svcCard__dot" aria-hidden="true">
-          •
-        </span>
-        <span className="svcCard__loc">{service.location || '—'}</span>
+        <span className="svcCard__dot">•</span>
+        <span className="svcCard__loc">{service.location}</span>
+        {service.category && <span className="chip">{service.category}</span>}
       </div>
-
-      {/* remove buttons on owner view */}
-      {!hideActions && (
-        <footer className="svcCard__actions">
-          <button
-            type="button"
-            className="btn btn--ghost"
-            onClick={(e) => {
-              e.stopPropagation();
-              window.location.href = `/services/${service._id}`;
-            }}
-          >
-            View
-          </button>
-
-          <button
-            type="button"
-            className="btn btn--primary"
-            onClick={(e) => {
-              e.stopPropagation();
-              window.location.href = `/bookings/new?serviceId=${service._id}`;
-            }}
-          >
-            Quick book
-          </button>
-        </footer>
-      )}
-    </article>
+    </Link>
   );
 }
 
@@ -82,6 +49,4 @@ ServiceCard.propTypes = {
     averageRating: PropTypes.number,
     reviewsCount: PropTypes.number,
   }).isRequired,
-  onClick: PropTypes.func,
-  hideActions: PropTypes.bool,
 };

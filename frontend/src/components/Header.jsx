@@ -1,6 +1,6 @@
 // src/components/Header.jsx
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/authContext';
+import { useAuth } from '../context/authContext'; // <-- not "authContext"
 import './Header.css';
 
 export default function Header() {
@@ -19,7 +19,6 @@ export default function Header() {
           ServiceHub
         </Link>
 
-        {/* left nav */}
         <nav className="nav">
           <Link to="/" className="nav__link">
             Home
@@ -31,7 +30,6 @@ export default function Header() {
           )}
         </nav>
 
-        {/* right side */}
         <div className="header__right">
           {loadingUser ? (
             <div className="header__skeleton" />

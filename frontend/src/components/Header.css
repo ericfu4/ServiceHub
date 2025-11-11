@@ -1,72 +1,91 @@
-/* src/components/Header.css */
+/* Header container */
 .header {
   position: sticky;
   top: 0;
-  background: var(--surface-2);
-  backdrop-filter: saturate(180%) blur(8px);
-  border-bottom: 1px solid var(--stroke);
-  z-index: 10;
+  z-index: 50;
+  backdrop-filter: saturate(120%) blur(6px);
+  background: linear-gradient(
+    180deg,
+    rgba(10, 10, 12, 0.8),
+    rgba(10, 10, 12, 0.6)
+  );
+  border-bottom: 1px solid var(--border);
 }
+
 .header__inner {
-  max-width: 1100px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 12px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-.brand {
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  text-decoration: none;
-  color: var(--text-strong);
-}
-.nav {
-  display: flex;
   gap: 16px;
 }
-.nav__link {
+
+/* Brand */
+.brand {
+  font-weight: 800;
+  letter-spacing: 0.2px;
   color: var(--text);
+  text-decoration: none;
+}
+
+/* Left nav */
+.nav {
+  display: flex;
+  gap: 14px;
+}
+.nav__link {
+  color: var(--text-weak);
   text-decoration: none;
   padding: 6px 8px;
   border-radius: 8px;
 }
 .nav__link:hover {
-  background: var(--surface-3);
+  color: var(--text);
+  background: var(--panel);
 }
+
+/* Right side */
 .header__right {
   display: flex;
-  gap: 12px;
   align-items: center;
+  gap: 10px;
 }
+.header__skeleton {
+  width: 96px;
+  height: 28px;
+  background: var(--panel);
+  border-radius: 8px;
+}
+
+/* Greeting + buttons */
 .greet {
-  color: var(--text-muted);
+  color: var(--text-weak);
+  font-size: 14px;
 }
+
+/* Buttons */
 .btn {
-  border: 1px solid var(--stroke);
+  appearance: none;
+  border: 0;
   padding: 8px 12px;
   border-radius: 10px;
+  font-weight: 600;
   cursor: pointer;
   text-decoration: none;
 }
 .btn--ghost {
-  background: transparent;
+  background: var(--panel);
   color: var(--text);
 }
 .btn--ghost:hover {
-  background: var(--surface-3);
+  background: var(--panel-strong);
 }
 .btn--primary {
   background: var(--brand);
   color: white;
-  border-color: var(--brand);
 }
 .btn--primary:hover {
-  filter: brightness(0.95);
-}
-.header__skeleton {
-  width: 120px;
-  height: 28px;
-  border-radius: 6px;
-  background: var(--skeleton);
+  filter: brightness(1.05);
 }

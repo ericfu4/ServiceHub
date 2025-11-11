@@ -62,11 +62,7 @@ export default function ServiceList({
   return (
     <div className="grid">
       {items.map((svc) => (
-        <ServiceCard
-          key={svc._id}
-          service={svc}
-          onClick={() => (window.location.href = `/services/${svc._id}`)}
-        />
+        <ServiceCard key={svc._id} service={svc} />
       ))}
     </div>
   );

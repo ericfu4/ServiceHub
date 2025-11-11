@@ -29,31 +29,27 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [errMsg, setErrMsg] = useState('');
 
-  // local UI state
   const [q, setQ] = useState('');
   const [sort, setSort] = useState('updated');
 
   useEffect(() => {
     let alive = true;
-
     (async () => {
       try {
         setLoading(true);
         setErrMsg('');
 
-        // 1) who am I?
+        // who am I?
         const { userId } = await api.get('/api/auth/me');
         if (!alive) return;
-
         if (!userId) {
           navigate('/login');
           return;
         }
 
-        // Fetch user + listings in parallel
+        // fetch user + listings
         const [userRes, listingsRes] = await Promise.all([
           api.get(`/api/users/${userId}`),
-          // Prefer dedicated route; if it 404s, we’ll try providerId below
           api
             .get('/api/services/mine')
             .catch(() =>
@@ -63,25 +59,20 @@ export default function Profile() {
         if (!alive) return;
 
         setMe(userRes.user || null);
-
-        // handle shape { items, total, ... } or plain array
         const items = Array.isArray(listingsRes)
           ? listingsRes
           : listingsRes.items || [];
         setMine(items);
       } catch (e) {
-        // Handle auth errors cleanly
-        if (e?.message && /401|403/i.test(e.message)) {
+        if (/401|403/.test(String(e?.message))) {
           navigate('/login');
           return;
         }
-        // Show a compact banner, not raw error text in the page flow
         setErrMsg('Could not load your profile or listings.');
       } finally {
         if (alive) setLoading(false);
       }
     })();
-
     return () => {
       alive = false;
     };
@@ -115,7 +106,6 @@ export default function Profile() {
 
   return (
     <div className="profile">
-      {/* Inline banner if something failed */}
       {errMsg && <div className="alert">{errMsg}</div>}
 
       <section className="profile__header">
@@ -182,12 +172,7 @@ export default function Profile() {
         ) : (
           <div className="grid">
             {filtered.map((svc) => (
-              <ServiceCard
-                key={svc._id}
-                service={svc}
-                hideActions // ⟵ add this line
-                onClick={() => (window.location.href = `/services/${svc._id}`)}
-              />
+              <ServiceCard key={svc._id} service={svc} />
             ))}
           </div>
         )}
