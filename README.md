@@ -48,6 +48,9 @@ The goal is to create a trusted, student-only marketplace that makes it easy to 
 
 ---
 
+## Video Demo 
+Link: https://youtu.be/Wk3z3jF6QTQ
+
 ## 🛠️ Technology Stack
 
 **Frontend:**
