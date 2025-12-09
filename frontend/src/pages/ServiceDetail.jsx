@@ -1,5 +1,6 @@
 // src/pages/ServiceDetail.jsx
 import { useEffect, useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
 import { useParams } from 'react-router-dom';
 import { api } from '../services/api';
 import './ServiceDetail.css';
@@ -218,3 +219,5 @@ export default function ServiceDetail() {
     </div>
   );
 }
+
+ServiceDetail.propTypes = {};

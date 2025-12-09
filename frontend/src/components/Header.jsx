@@ -1,4 +1,5 @@
 // src/components/Header.jsx
+import PropTypes from 'prop-types';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/authContext';
 import './Header.css';
@@ -60,3 +61,5 @@ export default function Header() {
     </header>
   );
 }
+
+Header.propTypes = {};
