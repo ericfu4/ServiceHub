@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { api } from '../services/api';
 import ServiceList from './ServiceList';
 import Loading from '../components/Loading';
-import './Profile.css';
+import './ProviderProfile.css';
 
 export default function ProviderProfile() {
   const { providerId } = useParams();

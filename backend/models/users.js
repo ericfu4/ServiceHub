@@ -1,5 +1,5 @@
 import { getDB } from '../utils/db.js';
-import crypto, { hash } from 'crypto';
+import crypto from 'crypto';
 import { ObjectId } from 'bson';
 
 const COLLECTION = 'users';
@@ -30,9 +30,9 @@ export async function ensureUserIndexes() {
 }
 
 // registers new users with validations
-/* requires .edu email, minimum 8 character password, 
-hashes password using scrypt, stores, role, major, graduation year, 
-sets isVerified to true, 
+/* requires .edu email, minimum 8 character password,
+hashes password using scrypt, stores, role, major, graduation year,
+sets isVerified to true,
 returns sanitized user data */
 export async function createUser({
   username,

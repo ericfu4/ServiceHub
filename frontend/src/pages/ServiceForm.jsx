@@ -1,30 +1,8 @@
+// frontend/src/pages/ServiceForm.jsx
 import { useState } from 'react';
+import PropTypes from 'prop-types';
 import { api } from '../services/api';
 import './ServiceForm.css';
-
-const SCHOOLS = [
-  'Boston University',
-  'Northeastern University',
-  'Harvard University',
-  'MIT',
-  'Tufts University',
-  'Boston College',
-  'Emerson College',
-  'Suffolk University',
-  'UMass Boston',
-  'Berklee College of Music',
-  'Simmons University',
-  'Wentworth Institute of Technology',
-  'Lesley University',
-  'MCPHS University',
-  'Bentley University',
-  'Brandeis University',
-  'Babson College',
-  'Olin College of Engineering',
-  'Fisher College',
-  'Emmanuel College',
-  'Wheelock College',
-];
 
 export default function ServiceForm({ onCreated }) {
   const [form, setForm] = useState({
@@ -33,11 +11,11 @@ export default function ServiceForm({ onCreated }) {
     category: 'tutoring',
     hourlyRate: 20,
     itemPrice: '',
+    location: '',
     school: '',
   });
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
-
   const update = (k, v) => setForm((s) => ({ ...s, [k]: v }));
 
   const submit = async (e) => {
@@ -95,7 +73,7 @@ export default function ServiceForm({ onCreated }) {
           <textarea
             id="desc"
             className="textarea"
-            placeholder="What’s included? Any requirements?"
+            placeholder="What's included? Any requirements?"
             value={form.description}
             onChange={(e) => update('description', e.target.value)}
           />
@@ -111,11 +89,35 @@ export default function ServiceForm({ onCreated }) {
             required
           >
             <option value="">Select your school</option>
-            {SCHOOLS.map((school) => (
-              <option key={school} value={school}>
-                {school}
-              </option>
-            ))}
+            <option value="Boston University">Boston University</option>
+            <option value="Northeastern University">
+              Northeastern University
+            </option>
+            <option value="Harvard University">Harvard University</option>
+            <option value="MIT">MIT</option>
+            <option value="Tufts University">Tufts University</option>
+            <option value="Boston College">Boston College</option>
+            <option value="Emerson College">Emerson College</option>
+            <option value="Suffolk University">Suffolk University</option>
+            <option value="UMass Boston">UMass Boston</option>
+            <option value="Berklee College of Music">
+              Berklee College of Music
+            </option>
+            <option value="Simmons University">Simmons University</option>
+            <option value="Wentworth Institute of Technology">
+              Wentworth Institute of Technology
+            </option>
+            <option value="Lesley University">Lesley University</option>
+            <option value="MCPHS University">MCPHS University</option>
+            <option value="Bentley University">Bentley University</option>
+            <option value="Brandeis University">Brandeis University</option>
+            <option value="Babson College">Babson College</option>
+            <option value="Olin College of Engineering">
+              Olin College of Engineering
+            </option>
+            <option value="Fisher College">Fisher College</option>
+            <option value="Emmanuel College">Emmanuel College</option>
+            <option value="Wheelock College">Wheelock College</option>
           </select>
         </div>
 
