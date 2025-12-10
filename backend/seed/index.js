@@ -11,13 +11,13 @@ console.log('🌱 Starting ServiceHub data seeding…\n');
 (async () => {
   try {
     console.log('1️⃣  Seeding users…');
-    await seedUsers({ limit: SMALL ? 50 : 400 });
+    await seedUsers({ limit: SMALL ? 50 : 450 });
 
     console.log('\n2️⃣  Seeding services…');
-    await seedServices({ limit: SMALL ? 75 : 600 });
+    await seedServices({ limit: SMALL ? 75 : 350 });
 
     console.log('\n4️⃣  Seeding reviews…');
-    await seedReviews({ limit: SMALL ? 80 : 300 });
+    await seedReviews({ limit: SMALL ? 80 : 250 });
 
     console.log('\n✅ All data seeded successfully!');
   } catch (e) {

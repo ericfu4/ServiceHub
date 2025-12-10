@@ -47,15 +47,15 @@ export async function seedUsers({ limit = 0 } = {}) {
 
     // Normalize + make emails unique to avoid unique index collisions
     const seen = new Set();
+    const timestamp = Date.now();
     const docs = rows.map((u, i) => {
       let email = String(u.email || `user${i + 1}@example.edu`).toLowerCase();
-      if (seen.has(email)) {
-        const [name, domain] = email.split('@');
-        email = `${name}+${i}@${domain}`;
-      }
+      // Add timestamp to make truly unique
+      const [name, domain] = email.split('@');
+      email = `${name}+${timestamp}${i}@${domain}`;
       seen.add(email);
 
-      const username = String(u.username || email.split('@')[0]).toLowerCase();
+      const username = String(u.username || email.split('@')[0]).toLowerCase() + timestamp + i;
 
       return {
         username,
@@ -71,7 +71,7 @@ export async function seedUsers({ limit = 0 } = {}) {
       };
     });
 
-    await users.deleteMany({}); // wipe for repeatable runs
+    // Don't delete - just add more users
     const result = await users.insertMany(docs, { ordered: false });
     const inserted = Object.keys(result.insertedIds || {}).length;
     console.log(`✅ Inserted ${inserted} users`);

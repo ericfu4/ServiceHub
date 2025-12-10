@@ -26,7 +26,12 @@ export default function BrowseServices() {
     <main className="browseServices">
       <div className="container">
         <div className="browseServices__header">
-          <h1 className="h1">Browse All Services</h1>
+          <h1
+            className="h1"
+            style={{ fontSize: '2.6rem', fontWeight: 900, marginBottom: 8 }}
+          >
+            Browse All Services
+          </h1>
           <p className="text-muted">
             Discover services from verified students on your campus. Use the
             filters below to narrow down your search.

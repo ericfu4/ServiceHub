@@ -66,7 +66,7 @@ export async function seedReviews({ limit = 0 } = {}) {
         : faker.date.past({ years: 1 }),
     }));
 
-    await reviews.deleteMany({});
+    // Don't delete - just add more reviews
     const result = await reviews.insertMany(docs, { ordered: false });
     const inserted = result.insertedCount;
     console.log(`✅ Inserted ${inserted} reviews`);

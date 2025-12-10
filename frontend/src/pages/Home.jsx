@@ -5,7 +5,7 @@ import { useAuth } from '../context/authContext';
 import ServiceList from './ServiceList';
 import './Home.css';
 
-export default function Home() {
+function Home() {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [category, setCategory] = useState('');
@@ -26,11 +26,32 @@ export default function Home() {
       <section className="hero">
         <div className="hero__inner">
           <div>
-            <div className="kicker">Student Services Marketplace</div>
-            <h1 className="h1" style={{ marginTop: 6, marginBottom: 4 }}>
+            <h1
+              style={{
+                fontSize: '3.2rem',
+                fontWeight: 900,
+                margin: '0 0 12px 0',
+                lineHeight: 1.1,
+              }}
+            >
               Find help fast. Earn faster.
             </h1>
-            <p className="text-muted" style={{ maxWidth: 720 }}>
+            <div
+              className="kicker"
+              style={{
+                fontSize: '1.1rem',
+                fontWeight: 700,
+                letterSpacing: 1,
+                marginBottom: 12,
+                textTransform: 'uppercase',
+              }}
+            >
+              Student Services Marketplace
+            </div>
+            <p
+              className="text-muted"
+              style={{ fontSize: '1rem', maxWidth: 900, marginBottom: 0 }}
+            >
               Book tutoring, moving help, tech support, photography and more —
               from verified students on your campus.
             </p>
@@ -38,7 +59,7 @@ export default function Home() {
               <button
                 className="button button--primary"
                 onClick={() => navigate('/create-listing')}
-                style={{ marginTop: 16 }}
+                style={{ marginTop: 16, fontSize: '1rem', padding: '8px 20px' }}
               >
                 Create a Listing
               </button>
@@ -146,7 +167,7 @@ export default function Home() {
       <section className="section">
         <div className="container">
           <div className="home__sectionHeader" style={{ marginBottom: 32 }}>
-            <h2 className="h2">Browse Services</h2>
+            <h2 className="h2">Browse the Most Recent Services</h2>
             <span className="text-muted">
               Find the services that match your needs.
             </span>
@@ -164,3 +185,7 @@ export default function Home() {
     </main>
   );
 }
+
+Home.propTypes = {};
+
+export default Home;

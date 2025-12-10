@@ -103,7 +103,7 @@ export async function seedServices({ limit = 0 } = {}) {
       };
     });
 
-    await services.deleteMany({});
+    // Don't delete - just add more services
     const result = await services.insertMany(docs, { ordered: false });
     const inserted = Object.keys(result.insertedIds || {}).length;
     console.log(`✅ Inserted ${inserted} services`);
